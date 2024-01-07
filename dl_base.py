@@ -12,10 +12,11 @@ import math
 import random
 
 import transformers
+from transformers import BertTokenizer
 from torch.nn.parameter import Parameter
 import torch.nn.functional as F
 from scipy.sparse import csr_matrix, save_npz
-import apex
+# import apex
 import sys
 import xclib.evaluation.xc_metrics as xc_metrics
 import pandas as pd
@@ -700,6 +701,7 @@ class BCELoss(nn.Module):
 class FullPredictor():
     def __init__(self, K=5):
         self.K = K
+        self.tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 
     def __call__(self, loss_model, model: GenericModel, dataloader: DataLoader):
         datalen = len(dataloader.dataset)
@@ -792,7 +794,22 @@ class FullPredictor():
                     if start_bs < bsz and end_bs > bsz:
                         end_bs = bsz
                         xfcz = end_bs - start_bs
-
+                # print("IDK: ", batch_data['xfts'])
+                decoded_predictions = [self.tokenizer.decode(pred, skip_special_tokens=True) for pred in top_inds[0]]
+                if 'y' in batch_data:
+                        ground_truth = batch_data['y']
+                        decoded_ground_truth = [self.tokenizer.decode(gt, skip_special_tokens=True) for gt in ground_truth]
+                decoded_inputs = [self.tokenizer.decode(inp, skip_special_tokens=True) for inp in batch_data['xfts']['input_ids']]
+                if model.rank == 0:
+                        # Print information for each item in the batch (or a subset for brevity)
+                        # Adjust as needed
+                        print(f"Input: {decoded_inputs[0]}")
+                        if 'y' in batch_data:
+                            print(f"Ground Truth: {decoded_ground_truth[0]}")
+                        print(f"Prediction: {decoded_predictions[0]}")
+                        print("---")
+        print(data)
+        print(data.ravel())
         if model.rank == 0:
             return csr_matrix((data.ravel(), inds.ravel(), indptr), (datalen, numy))
         else:
