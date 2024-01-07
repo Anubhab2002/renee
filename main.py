@@ -175,10 +175,10 @@ def start(device, ngpus_per_node, args):
       evaluator(trn_loss,out_dir=None, name=model.name)
   else:
       model.fit(trn_loader, trn_loss, 
-          xfc_optimizer_class = apex.optimizers.FusedSGD,
-          xfc_optimizer_params= {'lr': args.lr1, 'momentum': args.mo, 'weight_decay': args.wd1,  'set_grad_none': True},  
-          tf_optimizer_class = apex.optimizers.FusedAdam,
-          tf_optimizer_params= {'lr': args.lr2, 'eps': 1e-06, 'set_grad_none': True, 'bias_correction': True, 'weight_decay': args.wd2},
+          xfc_optimizer_class = torch.optim.SGD,
+          xfc_optimizer_params= {'lr': args.lr1, 'momentum': args.mo, 'weight_decay': args.wd1},  
+          tf_optimizer_class = torch.optim.Adam,
+          tf_optimizer_params= {'lr': args.lr2, 'eps': 1e-06, 'weight_decay': args.wd2},
           epochs = args.epochs, warmup_steps = args.warmup,
           evaluator=evaluator,
           evaluation_epochs=5,
